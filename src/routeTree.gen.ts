@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ModuleRouteImport } from './routes/$module'
+import { Route as PorteriaRouteImport } from './routes/porteria'
+import { Route as ResidenteRouteImport } from './routes/residente'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +24,49 @@ const ModuleRoute = ModuleRouteImport.update({
   path: '/$module',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PorteriaRoute = PorteriaRouteImport.update({
+  id: '/porteria',
+  path: '/porteria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResidenteRoute = ResidenteRouteImport.update({
+  id: '/residente',
+  path: '/residente',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$module': typeof ModuleRoute
+  '/porteria': typeof PorteriaRoute
+  '/residente': typeof ResidenteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$module': typeof ModuleRoute
+  '/porteria': typeof PorteriaRoute
+  '/residente': typeof ResidenteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$module': typeof ModuleRoute
+  '/porteria': typeof PorteriaRoute
+  '/residente': typeof ResidenteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$module'
+  fullPaths: '/' | '/$module' | '/porteria' | '/residente'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$module'
-  id: '__root__' | '/' | '/$module'
+  to: '/' | '/$module' | '/porteria' | '/residente'
+  id: '__root__' | '/' | '/$module' | '/porteria' | '/residente'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ModuleRoute: typeof ModuleRoute
+  PorteriaRoute: typeof PorteriaRoute
+  ResidenteRoute: typeof ResidenteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +85,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModuleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/porteria': {
+      id: '/porteria'
+      path: '/porteria'
+      fullPath: '/porteria'
+      preLoaderRoute: typeof PorteriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/residente': {
+      id: '/residente'
+      path: '/residente'
+      fullPath: '/residente'
+      preLoaderRoute: typeof ResidenteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ModuleRoute: ModuleRoute,
+  PorteriaRoute: PorteriaRoute,
+  ResidenteRoute: ResidenteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
