@@ -63,13 +63,13 @@ export const guardPortal: PortalConfig = {
 };
 
 export function RolePortal({ config }: { config: PortalConfig }) {
-  const [active, setActive] = useState(config.sections[0].key);
+  const [active, setActive] = useState(config.sections[0]?.key ?? "");
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<string[] | null>(null);
   const [notice, setNotice] = useState("");
-  const section = config.sections.find((s) => s.key === active) ?? config.sections[0];
+  const section = (config.sections.find((s) => s.key === active) ?? config.sections[0]) as Section;
   const isHome = section.columns.length === 0;
   const rows = useMemo(() => {
     const q = query.toLocaleLowerCase("es");
