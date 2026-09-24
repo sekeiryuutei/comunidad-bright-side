@@ -57,8 +57,16 @@ const modules: ModuleConfig[] = [
 const groups = ["General", "Finanzas", "Operación", "Comunidad", "Sistema"] as const;
 const accentStyles = ["bg-mint-soft text-mint-foreground", "bg-butter-soft text-butter-foreground", "bg-rose-soft text-rose-foreground", "bg-lilac-soft text-lilac-foreground"];
 
+function getModuleConfig(module?: string): ModuleConfig {
+  const match = modules.find((item) => item.key === module);
+  if (match) return match;
+  const dashboard = modules.find((item) => item.key === "dashboard");
+  if (!dashboard) throw new Error("No se encontró la configuración del dashboard");
+  return dashboard;
+}
+
 export function ResidentialApp({ module = "dashboard" }: { module?: string }) {
-  const config = modules.find((item) => item.key === module) ?? modules[0];
+  const config = getModuleConfig(module);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -176,4 +184,4 @@ function DashboardCard({ title, icon: Icon, items }: { title: string; icon: Icon
   return <article className="rounded-3xl bg-card p-6 shadow-soft"><div className="flex items-center gap-2"><span className="grid size-9 place-items-center rounded-xl bg-lilac-soft text-lilac-foreground"><Icon className="size-4"/></span><h2 className="font-display text-lg font-extrabold">{title}</h2></div><div className="mt-4 space-y-3">{items.map((item,index) => <div key={item} className="flex gap-3 rounded-2xl bg-secondary p-3"><span className={`mt-1 size-2.5 shrink-0 rounded-full ${index===0 ? "bg-primary" : index===1 ? "bg-peach" : "bg-mint"}`}/><p className="text-sm font-bold leading-snug">{item}</p></div>)}</div></article>;
 }
 
-export const moduleTitle = (module?: string) => modules.find((item) => item.key === module)?.label ?? "Dashboard";
+export const moduleTitle = (module?: string) => getModuleConfig(module).label;
