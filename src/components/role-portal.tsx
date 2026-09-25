@@ -20,7 +20,9 @@ type PortalConfig = {
   subtitle: string; user: string; initials: string; role: string; greeting: string;
   home: { title: string; items: string[] }[];
   sections: Section[];
+  properties?: Property[];
 };
+type Property = { name: string; city: string; role: string; home?: PortalConfig["home"]; sections?: Record<string, Partial<Section>> };
 
 const accents = ["bg-mint-soft text-mint-foreground", "bg-butter-soft text-butter-foreground", "bg-rose-soft text-rose-foreground", "bg-lilac-soft text-lilac-foreground"];
 
@@ -42,6 +44,25 @@ export const residentPortal: PortalConfig = {
     { key: "comunicados", label: "Comunicados", icon: Megaphone, description: "Noticias y circulares de la administración.", action: "Marcar como leídos", metrics: [["Nuevos", "3", "Sin leer"], ["Este mes", "7", "Publicados"], ["Asambleas", "1", "28 may"], ["Documentos", "14", "Disponibles"]], columns: ["Título", "Tipo", "Fecha", "Autor", "Estado"], rows: [["Convocatoria asamblea ordinaria", "Circular", "15 may", "Administración", "Publicado"], ["Corte de agua programado", "Aviso", "3 jun", "Administración", "Publicado"], ["Reglamento de piscina", "Documento", "1 may", "Consejo", "Publicado"]] },
   ],
 };
+
+residentPortal.properties = [
+  { name: "Reserva del Bosque", city: "Bogotá", role: "Propietaria · A-402" },
+  {
+    name: "Torres de Cedritos", city: "Bogotá", role: "Propietaria · T2-1203",
+    home: [
+      { title: "Próximos pagos", items: ["Cuota de administración junio · $410.000 · vence 5 jun", "Saldo en mora mayo · $410.000 + intereses"] },
+      { title: "Mis reservas", items: ["Gimnasio · sin reservas activas"] },
+      { title: "Comunicados", items: ["Pintura de fachada inicia el 15 de junio.", "Nuevo horario de portería: 24 horas."] },
+    ],
+    sections: {
+      inicio: { description: "Resumen de tu apartamento en Torres de Cedritos.", metrics: [["Saldo actual", "$832.000", "Incluye mora"], ["Estado", "En mora", "1 cuota vencida"], ["Reservas", "0", "Este mes"], ["PQRS abiertas", "0", "Todo resuelto"]] },
+      cuenta: { metrics: [["Saldo", "$832.000", "Junio 2026"], ["Pagado en el año", "$1,6 M", "4 cuotas"], ["Intereses", "$12.000", "Mora mayo"], ["Descuento", "0%", "No aplica"]], rows: [["Junio 2026", "Administración", "$410.000", "5 jun", "Pendiente"], ["Mayo 2026", "Administración", "$410.000", "5 may", "Vencido"], ["Mayo 2026", "Intereses de mora", "$12.000", "5 jun", "Pendiente"], ["Abril 2026", "Administración", "$410.000", "5 abr", "Pagado"]] },
+      pagos: { metrics: [["Último pago", "$410.000", "3 abr"], ["Método", "Transferencia", "Davivienda"], ["Comprobantes", "4", "Disponibles"], ["Pendientes", "2", "May–jun"]], rows: [["3 abr 2026", "TRF-9012", "Transferencia", "$410.000", "Aplicado"], ["4 mar 2026", "TRF-8420", "Transferencia", "$410.000", "Aplicado"]] },
+      reservas: { metrics: [["Próxima", "—", "Sin reservas"], ["Este año", "1", "Reservas"], ["Depósito", "$100.000", "Reembolsable"], ["Zonas", "3", "Disponibles"]], rows: [["Gimnasio", "12 feb", "06:00–07:00", "1", "Finalizado"]] },
+      pqrs: { metrics: [["Abiertas", "0", "—"], ["Resueltas", "2", "Este año"], ["Tiempo respuesta", "3,1 días", "Promedio"], ["Satisfacción", "4,2", "de 5"]], rows: [["TC-0311", "Solicitud", "Copia del reglamento", "10 mar", "Resuelto"], ["TC-0287", "Reclamo", "Filtración en parqueadero", "2 feb", "Resuelto"]] },
+    },
+  },
+];
 
 export const guardPortal: PortalConfig = {
   subtitle: "Portal de portería", user: "Carlos Méndez", initials: "CM", role: "Vigilante · Turno día",
@@ -69,7 +90,12 @@ export function RolePortal({ config }: { config: PortalConfig }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<string[] | null>(null);
   const [notice, setNotice] = useState("");
-  const section = (config.sections.find((s) => s.key === active) ?? config.sections[0]) as Section;
+  const [propIdx, setPropIdx] = useState(0);
+  const prop = config.properties?.[propIdx];
+  const view = useMemo<PortalConfig>(() => prop ? { ...config, role: prop.role, home: prop.home ?? config.home, sections: config.sections.map((s) => ({ ...s, ...(prop.sections?.[s.key] ?? {}) })) } : config, [config, prop]);
+  const propName = prop?.name ?? "Reserva del Bosque";
+  const propCity = prop?.city ?? "Bogotá";
+  const section = (view.sections.find((s) => s.key === active) ?? view.sections[0]) as Section;
   const isHome = section.columns.length === 0;
   const rows = useMemo(() => {
     const q = query.toLocaleLowerCase("es");
@@ -87,7 +113,7 @@ export function RolePortal({ config }: { config: PortalConfig }) {
             <div className="min-w-0"><p className="font-display text-xl font-extrabold leading-none">Residencias Albor</p><p className="mt-1 text-xs font-bold text-muted-foreground">{config.subtitle}</p></div>
             <Button aria-label="Cerrar menú" size="icon" variant="ghost" className="ml-auto rounded-full lg:hidden" onClick={() => setMenuOpen(false)}><X /></Button>
           </div>
-          <div className="mt-4 rounded-2xl bg-secondary p-3"><p className="text-xs font-extrabold text-muted-foreground">COPROPIEDAD</p><div className="mt-1 flex items-center justify-between"><span className="text-sm font-extrabold">Reserva del Bosque</span><ChevronRight className="size-4 text-muted-foreground" /></div></div>
+          <div className="mt-4 rounded-2xl bg-secondary p-3"><p className="text-xs font-extrabold text-muted-foreground">COPROPIEDAD</p><div className="mt-1 flex items-center justify-between">{config.properties && config.properties.length > 1 ? <select aria-label="Cambiar copropiedad" value={propIdx} onChange={(e) => { setPropIdx(Number(e.target.value)); setQuery(""); }} className="w-full cursor-pointer bg-transparent text-sm font-extrabold outline-none">{config.properties.map((p, i) => <option key={p.name} value={i}>{p.name} · {p.role.split("· ")[1]}</option>)}</select> : <><span className="text-sm font-extrabold">{propName}</span><ChevronRight className="size-4 text-muted-foreground" /></>}</div>{config.properties && config.properties.length > 1 && <p className="mt-1 text-[11px] font-bold text-muted-foreground">{config.properties.length} copropiedades asociadas</p>}</div>
           <nav className="mt-4 flex-1 overflow-y-auto" aria-label="Secciones">
             {config.sections.map((s) => {
               const Icon = s.icon; const on = s.key === section.key;
@@ -98,7 +124,7 @@ export function RolePortal({ config }: { config: PortalConfig }) {
             <Link to="/residente" className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-bold text-sidebar-foreground hover:bg-accent" activeProps={{ className: "text-primary" }}><Home className="size-4" />Residente</Link>
             <Link to="/porteria" className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm font-bold text-sidebar-foreground hover:bg-accent" activeProps={{ className: "text-primary" }}><ShieldCheck className="size-4" />Portería</Link>
           </nav>
-          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-secondary p-3"><div className="grid size-10 place-items-center rounded-full bg-mint-soft font-display font-extrabold text-mint-foreground">{config.initials}</div><div><p className="text-sm font-extrabold">{config.user}</p><p className="text-xs font-semibold text-muted-foreground">{config.role}</p></div></div>
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-secondary p-3"><div className="grid size-10 place-items-center rounded-full bg-mint-soft font-display font-extrabold text-mint-foreground">{config.initials}</div><div><p className="text-sm font-extrabold">{config.user}</p><p className="text-xs font-semibold text-muted-foreground">{view.role}</p></div></div>
         </aside>
 
         <main className="min-w-0 flex-1">
@@ -108,7 +134,7 @@ export function RolePortal({ config }: { config: PortalConfig }) {
             <div className="ml-auto flex items-center gap-2"><Button aria-label="Notificaciones" variant="secondary" size="icon" className="relative rounded-full"><Bell /><span className="absolute right-1 top-1 size-2 rounded-full bg-destructive" /></Button><Button onClick={() => setDialogOpen(true)} className="rounded-full shadow-brand"><Plus /><span className="hidden sm:inline">{section.action}</span></Button></div>
           </header>
           <div className="mx-auto max-w-[1480px] p-4 md:p-7">
-            <p className="text-xs font-extrabold uppercase text-primary">Reserva del Bosque · Bogotá</p>
+            <p className="text-xs font-extrabold uppercase text-primary">{propName} · {propCity}</p>
             <h1 className="mt-1 font-display text-3xl font-extrabold md:text-4xl">{isHome ? config.greeting : section.label}</h1>
             <p className="mt-1 max-w-2xl text-sm font-semibold text-muted-foreground">{section.description}</p>
             <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -116,7 +142,7 @@ export function RolePortal({ config }: { config: PortalConfig }) {
             </section>
             {isHome ? (
               <section className="mt-5 grid gap-5 lg:grid-cols-3">
-                {config.home.map((card, ci) => <article key={card.title} className="rounded-3xl bg-card p-6 shadow-soft"><h2 className="font-display text-lg font-extrabold">{card.title}</h2><div className="mt-4 space-y-3">{card.items.map((item, i) => <div key={item} className="flex gap-3 rounded-2xl bg-secondary p-3"><span className={`mt-1 size-2.5 shrink-0 rounded-full ${(i + ci) % 3 === 0 ? "bg-primary" : (i + ci) % 3 === 1 ? "bg-peach" : "bg-mint"}`} /><p className="text-sm font-bold leading-snug">{item}</p></div>)}</div></article>)}
+                {view.home.map((card, ci) => <article key={card.title} className="rounded-3xl bg-card p-6 shadow-soft"><h2 className="font-display text-lg font-extrabold">{card.title}</h2><div className="mt-4 space-y-3">{card.items.map((item, i) => <div key={item} className="flex gap-3 rounded-2xl bg-secondary p-3"><span className={`mt-1 size-2.5 shrink-0 rounded-full ${(i + ci) % 3 === 0 ? "bg-primary" : (i + ci) % 3 === 1 ? "bg-peach" : "bg-mint"}`} /><p className="text-sm font-bold leading-snug">{item}</p></div>)}</div></article>)}
               </section>
             ) : (
               <section className="mt-5 overflow-hidden rounded-3xl bg-card shadow-soft">
